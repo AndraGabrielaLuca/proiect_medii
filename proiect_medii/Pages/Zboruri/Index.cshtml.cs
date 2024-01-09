@@ -20,14 +20,15 @@ namespace proiect_medii.Pages.Zboruri
             _context = context;
         }
 
-        public IList<Zbor> Zbor { get;set; } = default!;
+        public IList<Zbor> Zbor { get; set; } = default!;
         public ZborData ZborD { get; set; }
         public int ZborID { get; set; }
         public int TerminalID { get; set; }
-        public async Task OnGetAsync(int? id, int? terminalID)
+        public string CurrentFilter { get; set; }
+        public async Task OnGetAsync(int? id, int? terminalID, string searchString)
         {
             ZborD = new ZborData();
-
+            CurrentFilter = searchString;
             ZborD.Zboruri = await _context.Zbor
             .Include(b => b.Companie)
             .Include(b => b.ZborTerminale)
@@ -35,12 +36,20 @@ namespace proiect_medii.Pages.Zboruri
             .AsNoTracking()
             .OrderBy(b => b.Destinatie)
             .ToListAsync();
-            if (id != null)
+
+            if (!String.IsNullOrEmpty(searchString))
             {
-                ZborID = id.Value;
-                Zbor zbor = ZborD.Zboruri
-                .Where(i => i.ID == id.Value).Single();
-                ZborD.Terminale = zbor.ZborTerminale.Select(s => s.Terminal);
+                ZborD.Zboruri = ZborD.Zboruri.Where(s => s.Destinatie.Contains(searchString)
+
+               || s.Destinatie.Contains(searchString));
+
+                if (id != null)
+                {
+                    ZborID = id.Value;
+                    Zbor zbor = ZborD.Zboruri
+                    .Where(i => i.ID == id.Value).Single();
+                    ZborD.Terminale = zbor.ZborTerminale.Select(s => s.Terminal);
+                }
             }
         }
     }
